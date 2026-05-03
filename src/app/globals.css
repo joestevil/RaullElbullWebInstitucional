@@ -1,0 +1,163 @@
+/* ───────────────────────────────────────────────────
+   BULLS - AIESEC en Chiclayo | Global Styles
+   ─────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  --color-bulls-red:      #CC0000;
+  --color-bulls-red-dark: #A30000;
+  --color-main-bg:        #F0F2F5;
+  --font-family-sans:     'Inter', system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar            { width: 5px; height: 5px; }
+::-webkit-scrollbar-track      { background: transparent; }
+::-webkit-scrollbar-thumb      { background: #CBD5E1; border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover{ background: #94A3B8; }
+
+/* ── Frictionless card ── */
+.card-frictionless {
+  background:    #ffffff;
+  border-radius: 20px;
+  box-shadow:    0 2px 16px 0 rgba(0,0,0,0.06);
+  border:        1.5px solid #E5E7EB;
+}
+
+/* ── Responsive page wrapper ── */
+.responsive-page {
+  padding:          32px 40px;
+  min-height:       100%;
+  background-color: #F0F2F5;
+}
+
+/* ── Page title ── */
+.page-title {
+  font-weight:    800;
+  font-size:      28px;
+  color:          #111827;
+  margin-bottom:  20px;
+  letter-spacing: -0.02em;
+}
+
+/* ── Events page 2-column grid ── */
+.events-layout {
+  display:               grid;
+  grid-template-columns: 1fr 380px;
+  gap:                   20px;
+  align-items:           start;
+}
+
+/* ── Events container (legacy) ── */
+.events-container {
+  max-width: 660px;
+  padding:   4px 20px;
+  width:     100%;
+}
+
+/* ── Profile page 2-column grid ── */
+.profile-grid {
+  display:               grid;
+  grid-template-columns: 1fr 1fr;
+  gap:                   16px;
+  align-items:           start;
+}
+
+/* ── Achievements 4-column grid ── */
+.achievements-grid {
+  display:               grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap:                   10px;
+}
+
+/* ── Valores 3-column grid (Cultura Bull) ── */
+.valores-grid {
+  display:               grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap:                   16px;
+}
+
+/* ── Progreso: chart + podio 2-column ── */
+.progreso-layout {
+  display:               grid;
+  grid-template-columns: 1fr 360px;
+  gap:                   20px;
+  align-items:           start;
+}
+
+/* ── Progreso: stats summary 4-column ── */
+.progreso-stats {
+  display:               grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap:                   14px;
+}
+
+/* ── Home: quick stats 4-column ── */
+.home-stats {
+  display:               grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap:                   14px;
+}
+
+/* ── Home: main 2-column layout ── */
+.home-main {
+  display:               grid;
+  grid-template-columns: 1fr 1fr;
+  gap:                   16px;
+  align-items:           start;
+}
+
+/* ── Home: quick nav 4-column ── */
+.home-quicknav {
+  display:               grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap:                   10px;
+}
+
+/* ────────────────────────────────────────────
+   RESPONSIVE BREAKPOINTS
+   ──────────────────────────────────────────── */
+
+/* Tablet  (< 1024px) */
+@media (max-width: 1023px) {
+  .responsive-page    { padding: 24px 28px; }
+  .page-title         { font-size: 24px; }
+  .events-container   { max-width: 100%; }
+  .events-layout      { grid-template-columns: 1fr; }
+  .profile-grid       { grid-template-columns: 1fr; }
+  .achievements-grid  { grid-template-columns: repeat(4, 1fr); }
+  .valores-grid       { grid-template-columns: repeat(2, 1fr); }
+  .progreso-layout    { grid-template-columns: 1fr; }
+  .progreso-stats     { grid-template-columns: repeat(2, 1fr); }
+  .home-stats         { grid-template-columns: repeat(2, 1fr); }
+  .home-main          { grid-template-columns: 1fr; }
+  .home-quicknav      { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Mobile  (< 768px) */
+@media (max-width: 767px) {
+  .responsive-page    { padding: 16px; }
+  .page-title         { font-size: 22px; margin-bottom: 14px; }
+  .events-container   { padding: 4px 12px; border-radius: 14px; }
+  .card-frictionless  { border-radius: 14px; }
+  .events-layout      { grid-template-columns: 1fr; gap: 12px; }
+  .profile-grid       { grid-template-columns: 1fr; gap: 12px; }
+  .achievements-grid  { grid-template-columns: repeat(2, 1fr); }
+  .valores-grid       { grid-template-columns: 1fr; }
+  .progreso-layout    { grid-template-columns: 1fr; gap: 12px; }
+  .progreso-stats     { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .home-stats         { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .home-main          { grid-template-columns: 1fr; gap: 12px; }
+  .home-quicknav      { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+}
+
