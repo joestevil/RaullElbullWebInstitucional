@@ -7,7 +7,7 @@ export async function createClient() {
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   if (!supabaseUrl || !supabaseUrl.startsWith('http') || !supabaseKey || supabaseKey === 'your-supabase-anon-key') {
-    return null
+    return null as unknown as ReturnType<typeof createServerClient>
   }
 
   return createServerClient(

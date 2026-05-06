@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import AppShell from "@/components/AppShell";
+import { AuthProvider } from "@/components/AuthProvider";
 
 export const metadata: Metadata = {
   title: "BULLS - AIESEC en Chiclayo",
@@ -11,7 +11,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="es">
       <body style={{ margin: 0, padding: 0, fontFamily: "'Inter', system-ui, sans-serif", WebkitFontSmoothing: 'antialiased' }}>
-        <AppShell>{children}</AppShell>
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

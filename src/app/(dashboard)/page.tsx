@@ -1,40 +1,26 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ChevronRight, CalendarDays, Target, TrendingUp, Users, Gift, Zap } from 'lucide-react'
+import { ChevronRight, CalendarDays, Target, TrendingUp, Gift, Zap } from 'lucide-react'
+import { useAuth } from '@/components/AuthProvider'
+import { getEventos, getMyAsistencias, getMetasKpi } from '@/app/actions/data'
+import type { EventoDB, AsistenciaDB } from '@/app/actions/data'
 
-// ─── Data (mock — en producción vendrá de Supabase) ──────────────────────────
-
-const NEXT_EVENTS = [
-  { day: '18', month: 'Oct', title: 'Taller de Liderazgo', type: 'LEC',     time: '6:00 PM', modality: 'Virtual' },
-  { day: '22', month: 'Oct', title: 'Día de la Cultura Bull', type: 'TEAM DAY', time: '6:00 PM', modality: 'Presencial' },
-  { day: '25', month: 'Oct', title: 'Reunión de LCM',       type: 'LCM',     time: '7:00 PM', modality: 'Presencial' },
-]
+// ─── Tipos ────────────────────────────────────────────────────────────────────
 
 const TYPE_COLORS: Record<string, { bg: string; text: string }> = {
-  'LEC':      { bg: '#FEE2E2', text: '#991B1B' },
-  'TEAM DAY': { bg: '#EDE9FE', text: '#5B21B6' },
-  'LCM':      { bg: '#DBEAFE', text: '#1E40AF' },
+  'LEC':            { bg: '#FEE2E2', text: '#991B1B' },
+  'TEAM DAY':       { bg: '#EDE9FE', text: '#5B21B6' },
+  'LCM':            { bg: '#DBEAFE', text: '#1E40AF' },
+  'REUNIÓN DE ÁREA':{ bg: '#FEF3C7', text: '#92400E' },
+  'ITM':            { bg: '#D1FAE5', text: '#065F46' },
 }
-
-const KPIS = [
-  { label: '% Membresía Activa', value: '80%',  icon: '👥', progress: 80  },
-  { label: '# APDs',             value: '5/7',  icon: '📋', progress: 71  },
-  { label: '% Meta Financiera',  value: '80%',  icon: '💰', progress: 80  },
-]
-
-const BIRTHDAYS_SOON = [
-  { name: 'Maria Garcia',  date: '14 Oct' },
-  { name: 'Juan Perez',    date: '20 Oct' },
-]
-
-const WEEK_PROGRESS = 90
-const RANK_POSITION  = 2
-const TOTAL_MEMBERS  = 7
 
 const TODAY = new Date()
 const DAYS_ES = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado']
 const MONTHS_ES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre']
+const MONTHS_SHORT = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -69,8 +55,53 @@ function MiniProgressBar({ pct, color = '#CC0000' }: { pct: number; color?: stri
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function HomePage() {
+  const { profile } = useAuth()
+  const [eventos, setEventos] = useState<EventoDB[]>([])
+  const [asistencias, setAsistencias] = useState<AsistenciaDB[]>([])
+  const [kpis, setKpis] = useState<{ titulo: string; valor_actual: number; valor_objetivo: number }[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function loadData() {
+      const [eventosData, asistenciasData, kpisData] = await Promise.all([
+        getEventos(),
+        getMyAsistencias(),
+        getMetasKpi(),
+      ])
+      setEventos(eventosData)
+      setAsistencias(asistenciasData)
+      setKpis(kpisData)
+      setLoading(false)
+    }
+    loadData()
+  }, [])
+
   const greeting = TODAY.getHours() < 12 ? 'Buenos días' : TODAY.getHours() < 18 ? 'Buenas tardes' : 'Buenas noches'
   const dateStr = `${DAYS_ES[TODAY.getDay()]}, ${TODAY.getDate()} de ${MONTHS_ES[TODAY.getMonth()]} ${TODAY.getFullYear()}`
+
+  const displayName = profile ? profile.nombres.split(' ')[0] : '...'
+  const userRole = profile?.cargo?.nombre_cargo || ''
+  const userArea = profile?.area?.nombre || ''
+
+  // Próximos eventos (futuro)
+  const now = new Date()
+  const upcomingEvents = eventos
+    .filter(e => new Date(e.fecha_hora_inicio) >= now)
+    .slice(0, 3)
+
+  // Cantidad de eventos asistidos
+  const eventosAsistidos = asistencias.length
+
+  // Antigüedad (si hay fecha_ingreso en el perfil no la tenemos aquí directamente, usamos fallback)
+  const antiguedad = '—'
+
+  // KPIs formateados
+  const kpisFormatted = kpis.slice(0, 3).map(k => ({
+    label: k.titulo,
+    value: `${k.valor_actual}/${k.valor_objetivo}`,
+    icon: '📊',
+    progress: k.valor_objetivo > 0 ? Math.round((k.valor_actual / k.valor_objetivo) * 100) : 0,
+  }))
 
   return (
     <div className="responsive-page">
@@ -95,10 +126,10 @@ export default function HomePage() {
             {dateStr.toUpperCase()}
           </p>
           <h1 style={{ color: 'white', fontWeight: 900, fontSize: '28px', letterSpacing: '-0.02em', marginBottom: '4px', lineHeight: 1.1 }}>
-            {greeting}, Joe 👋
+            {greeting}, {displayName} 👋
           </h1>
           <p style={{ color: 'rgba(255,230,230,0.9)', fontSize: '14px', fontWeight: 400 }}>
-            Team Leader C&V · Área de Marketing · <strong style={{ color: 'white' }}>BULLS CLCH</strong>
+            {userRole}{userArea ? ` · Área de ${userArea}` : ''} · <strong style={{ color: 'white' }}>BULLS CLCH</strong>
           </p>
         </div>
       </div>
@@ -106,10 +137,10 @@ export default function HomePage() {
       {/* ── Quick stats row ── */}
       <div className="home-stats" style={{ marginBottom: '20px' }}>
         {[
-          { value: '8',   label: 'Eventos asistidos', icon: '✅', color: '#22C55E' },
-          { value: '#2',  label: 'Posición en área',  icon: '🏆', color: '#F59E0B' },
-          { value: '90%', label: 'Performance semana', icon: '📈', color: '#CC0000' },
-          { value: '4m',  label: 'Antigüedad',         icon: '⏱️', color: '#6366F1' },
+          { value: String(eventosAsistidos), label: 'Eventos asistidos', icon: '✅', color: '#22C55E' },
+          { value: '#—',  label: 'Posición en área',  icon: '🏆', color: '#F59E0B' },
+          { value: '—', label: 'Performance semana', icon: '📈', color: '#CC0000' },
+          { value: antiguedad, label: 'Antigüedad',         icon: '⏱️', color: '#6366F1' },
         ].map(s => (
           <div key={s.label} className="card-frictionless" style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{ width: '40px', height: '40px', borderRadius: '12px', backgroundColor: `${s.color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', flexShrink: 0 }}>
@@ -133,24 +164,40 @@ export default function HomePage() {
           <div className="card-frictionless" style={{ padding: '20px 22px' }}>
             <CardHeader title="PRÓXIMOS EVENTOS" href="/eventos" icon={<CalendarDays size={16} />} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {NEXT_EVENTS.map((ev, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', backgroundColor: '#FAFAFA', borderRadius: '12px', border: '1px solid #F3F4F6' }}>
-                  {/* Date chip */}
-                  <div style={{ flexShrink: 0, textAlign: 'center', minWidth: '36px' }}>
-                    <p style={{ fontSize: '10px', fontWeight: 700, color: '#CC0000', textTransform: 'uppercase' }}>{ev.month}</p>
-                    <p style={{ fontSize: '20px', fontWeight: 900, color: '#111827', lineHeight: 1 }}>{ev.day}</p>
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px', flexWrap: 'wrap' }}>
-                      <span style={{ fontWeight: 700, fontSize: '13px', color: '#111827' }}>{ev.title}</span>
-                      <span style={{ padding: '1px 7px', borderRadius: '6px', fontSize: '10px', fontWeight: 700, backgroundColor: TYPE_COLORS[ev.type]?.bg, color: TYPE_COLORS[ev.type]?.text }}>
-                        {ev.type}
-                      </span>
+              {loading ? (
+                <p style={{ color: '#9CA3AF', fontSize: '13px' }}>Cargando eventos...</p>
+              ) : upcomingEvents.length === 0 ? (
+                <p style={{ color: '#9CA3AF', fontSize: '13px' }}>No hay próximos eventos.</p>
+              ) : (
+                upcomingEvents.map((ev) => {
+                  const date = new Date(ev.fecha_hora_inicio)
+                  const day = String(date.getDate())
+                  const month = MONTHS_SHORT[date.getMonth()]
+                  const time = date.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', hour12: true })
+                  const typeColor = TYPE_COLORS[ev.tipo_evento ?? ''] || { bg: '#F3F4F6', text: '#374151' }
+
+                  return (
+                    <div key={ev.id_evento} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', backgroundColor: '#FAFAFA', borderRadius: '12px', border: '1px solid #F3F4F6' }}>
+                      {/* Date chip */}
+                      <div style={{ flexShrink: 0, textAlign: 'center', minWidth: '36px' }}>
+                        <p style={{ fontSize: '10px', fontWeight: 700, color: '#CC0000', textTransform: 'uppercase' }}>{month}</p>
+                        <p style={{ fontSize: '20px', fontWeight: 900, color: '#111827', lineHeight: 1 }}>{day}</p>
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px', flexWrap: 'wrap' }}>
+                          <span style={{ fontWeight: 700, fontSize: '13px', color: '#111827' }}>{ev.titulo}</span>
+                          {ev.tipo_evento && (
+                            <span style={{ padding: '1px 7px', borderRadius: '6px', fontSize: '10px', fontWeight: 700, backgroundColor: typeColor.bg, color: typeColor.text }}>
+                              {ev.tipo_evento}
+                            </span>
+                          )}
+                        </div>
+                        <p style={{ fontSize: '11.5px', color: '#6B7280' }}>{ev.modalidad || 'Sin definir'} · {time}</p>
+                      </div>
                     </div>
-                    <p style={{ fontSize: '11.5px', color: '#6B7280' }}>{ev.modality} · {ev.time}</p>
-                  </div>
-                </div>
-              ))}
+                  )
+                })
+              )}
             </div>
           </div>
 
@@ -158,15 +205,21 @@ export default function HomePage() {
           <div className="card-frictionless" style={{ padding: '20px 22px' }}>
             <CardHeader title="METAS / KPIs" href="/metas" icon={<Target size={16} />} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              {KPIS.map(kpi => (
-                <div key={kpi.label}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-                    <span style={{ fontSize: '13px', color: '#374151', fontWeight: 500 }}>{kpi.icon} {kpi.label}</span>
-                    <span style={{ fontSize: '13px', fontWeight: 800, color: '#CC0000' }}>{kpi.value}</span>
+              {loading ? (
+                <p style={{ color: '#9CA3AF', fontSize: '13px' }}>Cargando metas...</p>
+              ) : kpisFormatted.length === 0 ? (
+                <p style={{ color: '#9CA3AF', fontSize: '13px' }}>Sin metas definidas.</p>
+              ) : (
+                kpisFormatted.map(kpi => (
+                  <div key={kpi.label}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                      <span style={{ fontSize: '13px', color: '#374151', fontWeight: 500 }}>{kpi.icon} {kpi.label}</span>
+                      <span style={{ fontSize: '13px', fontWeight: 800, color: '#CC0000' }}>{kpi.value}</span>
+                    </div>
+                    <MiniProgressBar pct={kpi.progress} />
                   </div>
-                  <MiniProgressBar pct={kpi.progress} />
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>
@@ -184,25 +237,26 @@ export default function HomePage() {
                 <svg width="72" height="72" viewBox="0 0 72 72" style={{ transform: 'rotate(-90deg)' }}>
                   <circle cx="36" cy="36" r="28" fill="none" stroke="#F3F4F6" strokeWidth="7" />
                   <circle cx="36" cy="36" r="28" fill="none" stroke="#CC0000" strokeWidth="7"
-                    strokeDasharray={`${(WEEK_PROGRESS / 100) * 2 * Math.PI * 28} ${2 * Math.PI * 28}`} strokeLinecap="round" />
+                    strokeDasharray={`${(0 / 100) * 2 * Math.PI * 28} ${2 * Math.PI * 28}`} strokeLinecap="round" />
                 </svg>
                 <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <span style={{ fontWeight: 900, fontSize: '14px', color: '#111827' }}>{WEEK_PROGRESS}%</span>
+                  <span style={{ fontWeight: 900, fontSize: '14px', color: '#111827' }}>—</span>
                 </div>
               </div>
               <div>
                 <p style={{ fontWeight: 700, fontSize: '14px', color: '#111827' }}>Semana actual</p>
-                <p style={{ fontSize: '12px', color: '#22C55E', fontWeight: 600 }}>✅ Alcanzando objetivos</p>
-                <p style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '2px' }}>Promedio del mes: 87%</p>
+                <p style={{ fontSize: '12px', color: '#9CA3AF', fontWeight: 600 }}>Datos pendientes</p>
               </div>
             </div>
 
             {/* Ranking position */}
             <div style={{ backgroundColor: '#FFF5F5', border: '1px solid #FECACA', borderRadius: '12px', padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ fontSize: '22px' }}>🥈</span>
+              <span style={{ fontSize: '22px' }}>🏆</span>
               <div>
-                <p style={{ fontWeight: 700, fontSize: '13px', color: '#111827' }}>Posición #{RANK_POSITION} en tu área</p>
-                <p style={{ fontSize: '11px', color: '#6B7280' }}>De {TOTAL_MEMBERS} miembros en Marketing</p>
+                <p style={{ fontWeight: 700, fontSize: '13px', color: '#111827' }}>Ranking de área</p>
+                <p style={{ fontSize: '11px', color: '#6B7280' }}>
+                  {userArea ? `Área de ${userArea}` : 'Sin área asignada'}
+                </p>
               </div>
             </div>
           </div>
@@ -210,17 +264,9 @@ export default function HomePage() {
           {/* Cumpleaños + Oportunidades */}
           <div className="card-frictionless" style={{ padding: '20px 22px' }}>
             <CardHeader title="CUMPLEAÑOS DEL MES" href="/directorio" icon={<Gift size={16} />} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {BIRTHDAYS_SOON.map(b => (
-                <div key={b.name} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span style={{ fontSize: '18px' }}>🎂</span>
-                  <p style={{ fontSize: '13px', color: '#374151' }}>
-                    <strong>{b.name}</strong>
-                    <span style={{ color: '#9CA3AF' }}> — {b.date}</span>
-                  </p>
-                </div>
-              ))}
-            </div>
+            <p style={{ color: '#9CA3AF', fontSize: '13px' }}>
+              Próximamente desde la base de datos.
+            </p>
           </div>
 
           {/* IXP Banner */}
